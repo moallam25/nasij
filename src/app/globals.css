@@ -1,0 +1,191 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --nasij-primary: #2F5D4A;
+  --nasij-secondary: #EAD9B6;
+  --nasij-accent: #D8B37A;
+  --nasij-cream: #FAF5EA;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--nasij-cream);
+  color: #1C1917;
+  font-family: var(--font-outfit), sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Arabic mode: Cairo for body, Noto Kufi for display */
+html[lang='ar'] body {
+  font-family: var(--font-cairo), system-ui, sans-serif;
+  letter-spacing: 0;
+  line-height: 1.85;
+  word-spacing: 0.04em;
+}
+html[lang='ar'] p,
+html[lang='ar'] li {
+  line-height: 1.9;
+}
+html[lang='ar'] .display-heading {
+  font-family: var(--font-noto-kufi), serif;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  line-height: 1.25;
+}
+html[lang='ar'] h1.display-heading,
+html[lang='ar'] h2.display-heading {
+  line-height: 1.2;
+}
+html[lang='ar'] input,
+html[lang='ar'] textarea,
+html[lang='ar'] select {
+  line-height: 1.7;
+}
+
+/* Prevent latin order codes from getting Arabic spacing */
+html[lang='ar'] [dir='ltr'] {
+  letter-spacing: normal;
+  word-spacing: normal;
+}
+
+::selection { background: var(--nasij-accent); color: #1C1917; }
+
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: #F5EBD5; }
+::-webkit-scrollbar-thumb { background: var(--nasij-primary); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #1F3F32; }
+
+/* Rope / thread divider */
+.rope-divider {
+  position: relative;
+  height: 24px;
+  width: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='24' viewBox='0 0 40 24'%3E%3Cpath d='M0 12 Q10 2 20 12 T40 12' stroke='%23D8B37A' stroke-width='1.5' fill='none'/%3E%3Cpath d='M0 12 Q10 22 20 12 T40 12' stroke='%232F5D4A' stroke-width='1.5' fill='none' opacity='0.6'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 40px 24px;
+  opacity: 0.7;
+}
+
+.weave-bg {
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(216, 179, 122, 0.04) 3px, rgba(216, 179, 122, 0.04) 4px),
+    repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(47, 93, 74, 0.04) 3px, rgba(47, 93, 74, 0.04) 4px);
+}
+
+/* Premium buttons with subtle inner shadow + lift */
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 bg-nasij-primary text-nasij-cream px-7 py-3.5 rounded-full font-medium transition-all duration-300 hover:bg-nasij-primary-dark hover:-translate-y-0.5;
+  box-shadow: 0 4px 12px rgba(47, 93, 74, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+.btn-primary:hover { box-shadow: 0 8px 24px rgba(47, 93, 74, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15); }
+.btn-outline {
+  @apply inline-flex items-center justify-center gap-2 border-2 border-nasij-primary text-nasij-primary px-7 py-3.5 rounded-full font-medium transition-all duration-300 hover:bg-nasij-primary hover:text-nasij-cream hover:-translate-y-0.5;
+}
+
+.display-heading {
+  font-family: var(--font-fraunces), serif;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+/* Loaders */
+.loom-loader {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(47, 93, 74, 0.2);
+  border-top-color: var(--nasij-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Form fields - softer */
+.field {
+  @apply w-full bg-nasij-cream/50 border border-nasij-accent/30 rounded-2xl px-5 py-3.5 text-nasij-ink placeholder:text-nasij-ink/40 focus:outline-none focus:border-nasij-primary focus:bg-white transition-all duration-200;
+}
+.field-label {
+  @apply block text-xs tracking-[0.15em] text-nasij-primary/70 mb-2 font-medium;
+}
+
+html[lang='ar'] .field-label { letter-spacing: 0.05em; font-weight: 600; }
+
+html[dir='rtl'] .flip-rtl { transform: scaleX(-1); }
+
+.status-dot {
+  @apply inline-block w-2 h-2 rounded-full;
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+@keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee { animation: marquee 30s linear infinite; }
+html[dir='rtl'] .animate-marquee { animation-direction: reverse; }
+
+/* Soft card */
+.card-soft {
+  background: white;
+  border: 1px solid rgba(216, 179, 122, 0.2);
+  border-radius: 24px;
+  box-shadow: 0 1px 3px rgba(47, 93, 74, 0.04), 0 12px 32px -12px rgba(47, 93, 74, 0.08);
+}
+
+/* Sticky mobile CTA */
+.sticky-mobile-cta {
+  @apply fixed bottom-4 inset-x-4 z-40 md:hidden;
+  filter: drop-shadow(0 8px 24px rgba(47, 93, 74, 0.25));
+}
+
+/* Page transitions */
+.fade-up {
+  animation: fadeUp 0.6s ease-out both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Premium section rhythm — generous breathing room between sections */
+.section-rhythm {
+  padding-top: clamp(5rem, 9vw, 9rem);
+  padding-bottom: clamp(5rem, 9vw, 9rem);
+}
+
+/* Soft float — reusable, slow, subtle */
+@keyframes soft-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.soft-float { animation: soft-float 7s ease-in-out infinite; }
+
+/* Arabic body: improve readability of the muted text used for descriptions */
+html[lang='ar'] .leading-relaxed { line-height: 1.95; }
+
+/* ============================================================
+   Admin dashboard readability — bump small text + tighten contrast
+   so the dashboard is comfortable to read on long shifts.
+   Scoped via the [data-dashboard] body attr that DashboardLayout sets.
+   ============================================================ */
+.dashboard-scope { font-size: 15px; }
+.dashboard-scope .text-xs   { font-size: 0.8rem;  line-height: 1.4; }   /* 12.8 → roomier */
+.dashboard-scope .text-sm   { font-size: 0.92rem; line-height: 1.55; }
+.dashboard-scope .text-base { font-size: 1rem;    line-height: 1.65; }
+
+/* Admin RTL micro-fixes: keep Latin order codes and dates readable */
+html[dir='rtl'] [dir='ltr'] {
+  unicode-bidi: isolate;
+  letter-spacing: normal;
+}
+
+/* Recharts tooltip: better contrast on cream bg */
+.recharts-tooltip-wrapper { outline: none !important; }
+.recharts-default-tooltip { background: #fff !important; }
