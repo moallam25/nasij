@@ -1,9 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Prevent webpack from bundling react-pdf — it needs Node native APIs (canvas,
-  // fs, etc.) that are unavailable in the webpack bundle. Without this Vercel
-  // build fails, producing an empty deployment that returns 404.
-  serverExternalPackages: ['@react-pdf/renderer'],
+  experimental: {
+    // Keep @react-pdf/renderer out of the webpack bundle — it relies on
+    // Node-only native APIs (canvas, fs) that webpack cannot polyfill.
+    // "serverExternalPackages" (Next 15 stable) is not recognised by 14.x;
+    // the correct key here is experimental.serverComponentsExternalPackages.
+    serverComponentsExternalPackages: ['@react-pdf/renderer'],
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.supabase.co' },
@@ -11,8 +14,10 @@ const nextConfig = {
     ],
   },
   webpack: (config) => {
-    // canvas is a native optional peer of react-pdf; alias it to false so
-    // webpack doesn't error when it can't resolve it in the server bundle.
+    // canvas is an optional native peer of react-pdf. Alias to false so
+    // webpack emits an empty stub instead of a build error when it walks
+    // the dependency graph (even with serverComponentsExternalPackages the
+    // alias is a useful safety net for any transitive client-bundle trace).
     config.resolve.alias = { ...config.resolve.alias, canvas: false };
     return config;
   },
