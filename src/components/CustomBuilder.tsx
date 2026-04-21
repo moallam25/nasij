@@ -41,21 +41,25 @@ export function CustomBuilder() {
 
   // Load active sizes from DB on mount
   useEffect(() => {
-    const supabase = createClient();
-    supabase
-      .from('sizes')
-      .select('id, label, width_cm, length_cm')
-      .eq('active', true)
-      .order('sort_order', { ascending: true })
-      .then(({ data }) => {
-        const list = (data || []) as DBSize[];
-        setDbSizes(list);
-        // Default to the middle option if available, else first
-        if (list.length && !size) {
-          const mid = list[Math.floor(list.length / 2)];
-          setSize(`${mid.width_cm}x${mid.length_cm}`);
-        }
-      });
+    try {
+      const supabase = createClient();
+      supabase
+        .from('sizes')
+        .select('id, label, width_cm, length_cm')
+        .eq('active', true)
+        .order('sort_order', { ascending: true })
+        .then(({ data }) => {
+          const list = (data || []) as DBSize[];
+          setDbSizes(list);
+          // Default to the middle option if available, else first
+          if (list.length && !size) {
+            const mid = list[Math.floor(list.length / 2)];
+            setSize(`${mid.width_cm}x${mid.length_cm}`);
+          }
+        });
+    } catch {
+      // Supabase not configured
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -31,13 +31,18 @@ export function Gallery() {
 
   useEffect(() => {
     const load = async () => {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
-      setProducts((data || []) as Product[]);
-      setLoading(false);
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false });
+        setProducts((data || []) as Product[]);
+      } catch {
+        // Supabase not configured — gallery shows empty state
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, []);

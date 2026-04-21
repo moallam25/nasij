@@ -26,20 +26,24 @@ export function OrderForm() {
   const [orderCode, setOrderCode] = useState<string | null>(null);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase
-      .from('sizes')
-      .select('id, label, width_cm, length_cm')
-      .eq('active', true)
-      .order('sort_order', { ascending: true })
-      .then(({ data }) => {
-        const list = (data || []) as DBSize[];
-        setDbSizes(list);
-        if (list.length) {
-          const mid = list[Math.floor(list.length / 2)];
-          setForm((f) => ({ ...f, size: `${mid.width_cm}x${mid.length_cm}` }));
-        }
-      });
+    try {
+      const supabase = createClient();
+      supabase
+        .from('sizes')
+        .select('id, label, width_cm, length_cm')
+        .eq('active', true)
+        .order('sort_order', { ascending: true })
+        .then(({ data }) => {
+          const list = (data || []) as DBSize[];
+          setDbSizes(list);
+          if (list.length) {
+            const mid = list[Math.floor(list.length / 2)];
+            setForm((f) => ({ ...f, size: `${mid.width_cm}x${mid.length_cm}` }));
+          }
+        });
+    } catch {
+      // Supabase not configured
+    }
   }, []);
 
   const submit = async (e: React.FormEvent) => {
