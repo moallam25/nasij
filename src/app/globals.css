@@ -189,3 +189,37 @@ html[dir='rtl'] [dir='ltr'] {
 /* Recharts tooltip: better contrast on cream bg */
 .recharts-tooltip-wrapper { outline: none !important; }
 .recharts-default-tooltip { background: #fff !important; }
+
+/* Hides scrollbar while keeping scroll functionality (used for carousel) */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* ── Typography polish ─────────────────────────────────────────────────────── */
+
+/* Crisper body text on large screens */
+@media (min-width: 768px) {
+  body { font-size: 16px; }
+}
+
+/* Consistent muted caption style */
+.text-caption {
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: rgba(28, 25, 23, 0.55);
+}
+
+/* Section kicker label */
+.kicker {
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--nasij-accent);
+  font-weight: 500;
+}
+
+html[lang='ar'] .kicker { letter-spacing: 0.06em; }
+
+/* Tighter display headings at large sizes */
+@media (min-width: 1024px) {
+  .display-heading { letter-spacing: -0.025em; }
+}

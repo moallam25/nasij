@@ -14,6 +14,7 @@ export type CreateOrderInput = {
   design_url?: string | null;
   length_cm?: number | null;
   width_cm?: number | null;
+  payment_method?: string | null;
 };
 
 // ---- input hygiene helpers ----
@@ -100,6 +101,7 @@ export async function submitOrder(input: CreateOrderInput) {
     design_url: cleanUrl(input.design_url),
     length_cm: cleanInt(input.length_cm, 10, 1000),
     width_cm: cleanInt(input.width_cm, 10, 1000),
+    payment_method: cleanOptional(input.payment_method, 50),
     status: 'pending_review',
   };
 

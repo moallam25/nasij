@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { LogOut, Package, ShoppingBag, LayoutDashboard, ExternalLink, BarChart3, Ruler, Stethoscope } from 'lucide-react';
+import { LogOut, Package, ShoppingBag, LayoutDashboard, ExternalLink, BarChart3, Ruler, Stethoscope, Tag } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Logo } from '@/components/Logo';
 import toast from 'react-hot-toast';
@@ -40,8 +40,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { href: '/dashboard',           label: 'الرئيسية',  en: 'Overview',  icon: LayoutDashboard },
     { href: '/dashboard/analytics', label: 'التحليلات', en: 'Analytics', icon: BarChart3 },
     { href: '/dashboard/orders',    label: 'الطلبات',   en: 'Orders',    icon: ShoppingBag },
-    { href: '/dashboard/products',  label: 'المنتجات',  en: 'Products',  icon: Package },
-    { href: '/dashboard/sizes',     label: 'المقاسات',  en: 'Sizes',     icon: Ruler },
+    { href: '/dashboard/products',   label: 'المنتجات',  en: 'Products',    icon: Package },
+    { href: '/dashboard/categories', label: 'الفئات',    en: 'Categories',  icon: Tag },
+    { href: '/dashboard/sizes',      label: 'المقاسات',  en: 'Sizes',       icon: Ruler },
   ];
 
   return (

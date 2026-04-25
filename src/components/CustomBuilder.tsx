@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, Check, X, Ruler } from 'lucide-react';
+import { Upload, Check, X, Ruler, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createClient } from '@/lib/supabase/client';
 import { submitOrder } from '@/lib/actions/orders';
@@ -24,7 +24,8 @@ const colorPalette = [
 ] as const;
 
 export function CustomBuilder() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
+  const isAr = locale === 'ar';
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [dbSizes, setDbSizes] = useState<DBSize[]>([]);
@@ -35,6 +36,7 @@ export function CustomBuilder() {
   const [customer, setCustomer] = useState({ customer_name: '', phone: '', address: '', customer_email: '' });
   const [submitting, setSubmitting] = useState(false);
 
+  const [customColorHex, setCustomColorHex] = useState('#2F5D4A');
   const [customSizeOpen, setCustomSizeOpen] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
   const [orderCode, setOrderCode] = useState<string | null>(null);
@@ -259,6 +261,57 @@ export function CustomBuilder() {
                     </button>
                   );
                 })}
+                {/* Custom hex colors added by the user */}
+                {colors.filter((c) => c.startsWith('#')).map((hex) => (
+                  <button
+                    key={hex}
+                    type="button"
+                    onClick={() => setColors((c) => c.filter((x) => x !== hex))}
+                    title={`Remove ${hex}`}
+                    className="relative w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-nasij-primary scale-110 transition-all"
+                    style={{ backgroundColor: hex }}
+                    aria-label={`Remove custom color ${hex}`}
+                  >
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <X size={14} className="text-white drop-shadow" />
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Custom color picker */}
+              <div className="flex items-center gap-3 mt-4 pt-3 border-t border-nasij-accent/15">
+                <span className="text-xs text-nasij-ink/50 shrink-0">
+                  {isAr ? 'لون مخصص' : 'Custom color'}
+                </span>
+                <label className="relative cursor-pointer shrink-0">
+                  <input
+                    type="color"
+                    value={customColorHex}
+                    onChange={(e) => setCustomColorHex(e.target.value)}
+                    className="sr-only"
+                  />
+                  <div
+                    className="w-11 h-11 rounded-full border-2 border-nasij-accent/40 hover:scale-110 transition-transform shadow-sm"
+                    style={{ backgroundColor: customColorHex }}
+                    title={customColorHex}
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (colors.length >= 5) {
+                      toast.error(isAr ? 'الحد الأقصى ٥ ألوان' : 'Max 5 colors');
+                      return;
+                    }
+                    if (!colors.includes(customColorHex)) {
+                      setColors((c) => [...c, customColorHex].slice(0, 5));
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs text-nasij-primary border border-nasij-primary/30 px-3 py-2 rounded-full hover:bg-nasij-primary/10 transition-colors"
+                >
+                  <Plus size={12} /> {isAr ? 'إضافة' : 'Add'}
+                </button>
               </div>
             </div>
 
@@ -319,7 +372,7 @@ export function CustomBuilder() {
               </div>
               <div className="mt-6 p-5 bg-nasij-secondary/40 rounded-2xl space-y-2 text-sm">
                 <Row label={t.custom.pSize} value={sizeDisplay(size)} />
-                <Row label={t.custom.pColors} value={colors.length > 0 ? colors.map((c) => (t.colors as any)[c]).join(', ') : t.custom.noColors} />
+                <Row label={t.custom.pColors} value={colors.length > 0 ? colors.map((c) => c.startsWith('#') ? c : (t.colors as any)[c]).join(', ') : t.custom.noColors} />
                 <Row label={t.custom.pDesign} value={file ? t.custom.uploaded : t.custom.notUploaded} />
               </div>
             </div>

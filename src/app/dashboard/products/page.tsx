@@ -17,7 +17,6 @@ type Product = {
 
 const empty = { name: '', image: '', price: 0, description: '', category: 'all' };
 
-const CATEGORY_OPTIONS = ['all', 'modern', 'classic', 'kids', 'bohemian', 'custom'];
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -27,6 +26,11 @@ export default function ProductsPage() {
   const [form, setForm] = useState<typeof empty>(empty);
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Derive existing category names for datalist suggestions
+  const existingCategories = [...new Set(
+    products.map((p) => p.category).filter((c): c is string => !!c && c !== 'all')
+  )].sort();
 
   const load = async () => {
     const supabase = createClient();
@@ -176,17 +180,17 @@ export default function ProductsPage() {
               </div>
               <div>
                 <div className="field-label">Category</div>
-                <select
+                <input
                   className="field"
-                  value={form.category}
-                  onChange={(e) => setForm({ ...form, category: e.target.value })}
-                >
-                  {CATEGORY_OPTIONS.map((c) => (
-                    <option key={c} value={c}>
-                      {c === 'all' ? 'All / Uncategorized' : c.charAt(0).toUpperCase() + c.slice(1)}
-                    </option>
-                  ))}
-                </select>
+                  list="category-suggestions"
+                  placeholder="e.g. modern, classic, kids (leave blank for uncategorized)"
+                  value={form.category === 'all' ? '' : form.category}
+                  onChange={(e) => setForm({ ...form, category: e.target.value.trim().toLowerCase() || 'all' })}
+                />
+                <datalist id="category-suggestions">
+                  {existingCategories.map((c) => <option key={c} value={c} />)}
+                </datalist>
+                <p className="text-[11px] text-nasij-ink/45 mt-1.5 ms-1">Type a new name to create a category, or leave blank for uncategorized.</p>
               </div>
               <div>
                 <div className="field-label">Image</div>
