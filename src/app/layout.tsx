@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { LocaleProvider } from '@/lib/i18n/provider';
 import { WhatsAppButton } from '@/components/WhatsAppButton';
 import { SetupBanner } from '@/components/SetupBanner';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import './globals.css';
 
 const fraunces = Fraunces({ subsets: ['latin'], variable: '--font-fraunces', display: 'swap' });
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <LocaleProvider>
           {children}
           <WhatsAppButton />
+          <SpeedInsights />
           <Toaster
             position="bottom-center"
             toastOptions={{
