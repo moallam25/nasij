@@ -5,10 +5,10 @@ import { createClient } from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Trash2, ExternalLink, MessageCircle, Edit3, Check, X, Phone, MapPin, Clock, FileDown, Download, Wifi,
+  Trash2, ExternalLink, MessageCircle, Edit3, Check, X, Phone, MapPin, Clock, FileDown, Download, Wifi, Printer,
 } from 'lucide-react';
 import {
-  ORDER_STATUSES, STATUS_COLORS, buildWhatsAppUrl, buildPriceMessage, type OrderStatus,
+  ORDER_STATUSES, STATUS_COLORS, buildWhatsAppUrl, buildOrderWhatsAppMessage, type OrderStatus,
 } from '@/lib/order-utils';
 import { useOrdersRealtime } from '@/lib/realtime/useOrdersRealtime';
 
@@ -28,6 +28,7 @@ type Order = {
   admin_notes: string | null;
   confirmation_sent: boolean;
   payment_status: string | null;
+  payment_method: string | null;
   created_at: string;
 };
 
@@ -91,7 +92,17 @@ export default function OrdersPage() {
       toast.error('Set a price first');
       return;
     }
-    const url = buildWhatsAppUrl(o.phone, buildPriceMessage(o.order_code, o.admin_price, o.customer_name));
+    const url = buildWhatsAppUrl(
+      o.phone,
+      buildOrderWhatsAppMessage({
+        orderCode: o.order_code,
+        customerName: o.customer_name,
+        price: o.admin_price,
+        paymentMethod: o.payment_method,
+        address: o.address,
+        adminNotes: o.admin_notes,
+      })
+    );
     window.open(url, '_blank', 'noopener,noreferrer');
 
     // Mark confirmation_sent + bump status if still in pricing_added
@@ -270,6 +281,11 @@ function OrderCard({
           {order.size && <span>Size: <b className="text-nasij-ink/80">{order.size}</b></span>}
         </div>
         {order.colors && <div className="text-xs text-nasij-ink/60">Colors: <b className="text-nasij-ink/80">{order.colors}</b></div>}
+        {order.payment_method && (
+          <div className="text-xs text-nasij-ink/60 inline-flex items-center gap-1">
+            Payment: <b className="text-nasij-ink/80">{order.payment_method.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</b>
+          </div>
+        )}
         {order.notes && <div className="text-sm text-nasij-ink/60 italic">"{order.notes}"</div>}
 
         {/* Pricing/admin row */}
@@ -323,7 +339,7 @@ function OrderCard({
           </button>
 
           <a
-            href={order.admin_price ? `/api/invoice/${order.order_code}` : undefined}
+            href={order.admin_price ? `/invoice/${order.order_code}` : undefined}
             target="_blank"
             rel="noreferrer"
             aria-disabled={!order.admin_price}
@@ -333,9 +349,24 @@ function OrderCard({
                 ? 'bg-nasij-accent text-nasij-primary-dark hover:bg-nasij-accent-dark hover:text-white'
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed pointer-events-none'
             }`}
-            title={order.admin_price ? 'Download Invoice PDF' : 'Set price first to enable invoice'}
+            title={order.admin_price ? 'Print Invoice' : 'Set price first to enable invoice'}
           >
-            <FileDown size={12} /> Invoice PDF
+            <Printer size={12} /> Print Invoice
+          </a>
+          <a
+            href={order.admin_price ? `/api/invoice/${order.order_code}` : undefined}
+            target="_blank"
+            rel="noreferrer"
+            aria-disabled={!order.admin_price}
+            onClick={(e) => { if (!order.admin_price) e.preventDefault(); }}
+            className={`px-3 py-2 text-xs rounded-full transition-colors inline-flex items-center gap-1.5 ${
+              order.admin_price
+                ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed pointer-events-none'
+            }`}
+            title={order.admin_price ? 'Download Invoice PDF' : 'Set price first'}
+          >
+            <FileDown size={12} /> PDF
           </a>
 
           <button onClick={onDelete} className="p-2 text-red-500 hover:bg-red-50 rounded-full" title="Delete">

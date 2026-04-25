@@ -23,7 +23,7 @@ export async function middleware(request: NextRequest) {
   // its own "env missing" message. Without this, /dashboard would redirect
   // to /dashboard/login which would redirect back, etc.
   if (!url || !anonKey) {
-    if (path.startsWith('/api/invoice') || path.startsWith('/api/export')) {
+    if (path.startsWith('/api/invoice') || path.startsWith('/api/export') || path.startsWith('/invoice')) {
       return NextResponse.json(
         { error: 'Supabase env not configured on the server' },
         { status: 500 }
@@ -85,9 +85,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  // Protect /invoice/* HTML print pages
+  if (path.startsWith('/invoice') && !user) {
+    return NextResponse.redirect(new URL(`/dashboard/login?next=${path}`, request.url));
+  }
+
   return response;
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/api/invoice/:path*', '/api/export/:path*'],
+  matcher: ['/dashboard/:path*', '/api/invoice/:path*', '/api/export/:path*', '/invoice/:path*'],
 };

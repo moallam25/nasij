@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Sparkles, ArrowUpRight,
   ChevronLeft, ChevronRight,
-  Phone, CreditCard, Truck, Check,
+  Phone, CreditCard, Truck, Check, Copy,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createClient } from '@/lib/supabase/client';
@@ -32,6 +32,11 @@ const PAYMENT_METHODS = [
   { id: 'instapay',     icon: CreditCard, ar: 'انستاباي',           en: 'InstaPay' },
   { id: 'cod',          icon: Truck,      ar: 'الدفع عند الاستلام', en: 'Cash on Delivery' },
 ] as const;
+
+const PAYMENT_ACCOUNTS: Record<string, string> = {
+  vodafone_cash: '01010759640',
+  instapay:      '01207003896',
+};
 
 // ─── Gallery ──────────────────────────────────────────────────────────────────
 
@@ -325,6 +330,16 @@ function ProductModal({ product, isAr, t, onClose, onOrderSuccess }: {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [agreed, setAgreed]           = useState(false);
   const [submitting, setSubmitting]   = useState(false);
+  const [copiedId, setCopiedId]       = useState<string | null>(null);
+
+  const copyAccount = async (pmId: string) => {
+    const num = PAYMENT_ACCOUNTS[pmId];
+    if (!num) return;
+    await navigator.clipboard.writeText(num);
+    setCopiedId(pmId);
+    toast.success(isAr ? 'تم نسخ الرقم' : 'Number copied!');
+    setTimeout(() => setCopiedId(null), 2500);
+  };
 
   const handleSubmit = async () => {
     if (!form.customer_name || !form.phone || !form.address) {
@@ -480,6 +495,28 @@ function ProductModal({ product, isAr, t, onClose, onOrderSuccess }: {
                       })}
                     </div>
                   </div>
+
+                  {/* Copyable account number for electronic payments */}
+                  {PAYMENT_ACCOUNTS[paymentMethod] && (
+                    <div className="bg-nasij-primary/[0.06] border border-nasij-primary/20 rounded-2xl p-4">
+                      <div className="text-[10px] uppercase tracking-wider text-nasij-primary/60 mb-2">
+                        {isAr ? 'حوّل على الرقم' : 'Transfer to'}
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="display-heading text-xl text-nasij-primary tracking-wider" dir="ltr">
+                          {PAYMENT_ACCOUNTS[paymentMethod]}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => copyAccount(paymentMethod)}
+                          className="flex items-center gap-1.5 text-xs font-medium transition-colors px-3 py-1.5 rounded-full border border-nasij-primary/20 hover:bg-nasij-primary/10 text-nasij-primary"
+                        >
+                          {copiedId === paymentMethod ? <Check size={12} /> : <Copy size={12} />}
+                          {copiedId === paymentMethod ? (isAr ? 'تم' : 'Copied!') : (isAr ? 'نسخ' : 'Copy')}
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Agreement checkbox */}
                   <button

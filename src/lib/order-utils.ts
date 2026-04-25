@@ -59,3 +59,39 @@ export function buildPriceMessage(orderCode: string, price: number, customerName
 
 نسيج — صناعة يدوية`;
 }
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  vodafone_cash: 'فودافون كاش',
+  instapay: 'انستاباي',
+  cod: 'الدفع عند الاستلام',
+};
+
+export function buildOrderWhatsAppMessage(params: {
+  orderCode: string;
+  customerName: string;
+  price?: number | null;
+  paymentMethod?: string | null;
+  address?: string | null;
+  adminNotes?: string | null;
+}): string {
+  const { orderCode, customerName, price, paymentMethod, address, adminNotes } = params;
+  const pmLabel = paymentMethod ? (PAYMENT_METHOD_LABELS[paymentMethod] || paymentMethod) : null;
+
+  const lines: string[] = [
+    `مرحبا ${customerName}،`,
+    ``,
+    `بخصوص طلبك من نسيج — كود الطلب: ${orderCode}`,
+  ];
+
+  if (price) lines.push(`السعر النهائي: ${price.toLocaleString('en-US')} ج.م.`);
+  if (pmLabel) lines.push(`طريقة الدفع: ${pmLabel}`);
+  if (address) lines.push(`العنوان: ${address}`);
+  if (adminNotes) { lines.push(``); lines.push(adminNotes); }
+
+  lines.push(``);
+  lines.push(`يرجى تأكيد الطلب لنبدأ بالتنفيذ.`);
+  lines.push(``);
+  lines.push(`نسيج — صناعة يدوية`);
+
+  return lines.join('\n');
+}
