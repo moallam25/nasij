@@ -1,16 +1,8 @@
 'use client';
 
-/**
- * Loads the OneSignal Web SDK v16 once in the root layout.
- * - No native prompt or bell button — opt-in is triggered explicitly per context.
- * - Pushes the init call to window.OneSignalDeferred so it runs even if this
- *   component mounts before the CDN script finishes downloading.
- */
-
 import Script from 'next/script';
 import { useEffect } from 'react';
 
-// Make window.OneSignal / OneSignalDeferred available to TypeScript
 declare global {
   interface Window {
     OneSignal?: any;
@@ -18,26 +10,27 @@ declare global {
   }
 }
 
-const APP_ID = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID;
+// Env var takes precedence; falls back to the project's app ID
+const APP_ID =
+  process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID || 'f4b5b1c8-dee5-4111-ba36-493bb8b8f764';
+
+const SAFARI_WEB_ID =
+  process.env.NEXT_PUBLIC_ONESIGNAL_SAFARI_WEB_ID ||
+  'web.onesignal.auto.170dfd78-50f3-4c48-aaba-810262274b60';
 
 export function OneSignalInit() {
   useEffect(() => {
-    if (!APP_ID) return;
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     window.OneSignalDeferred.push(async (OneSignal) => {
       await OneSignal.init({
         appId: APP_ID,
-        // Service worker must live at the root to control the full scope
+        safari_web_id: SAFARI_WEB_ID,
         serviceWorkerPath: '/OneSignalSDKWorker.js',
-        // Suppress native browser prompt — we ask explicitly per context
-        notifyButton: { enable: false },
-        welcomeNotification: { disable: true },
+        notifyButton: { enable: true },
         allowLocalhostAsSecureOrigin: true,
       });
     });
   }, []);
-
-  if (!APP_ID) return null;
 
   return (
     <Script
