@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Copy, Search, X } from 'lucide-react';
+import { Bell, Check, Copy, Search, X } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -16,8 +16,29 @@ export function OrderSuccessModal({
   onClose: () => void;
   orderCode: string | null;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [copied, setCopied] = useState(false);
+  const [pushState, setPushState] = useState<'idle' | 'loading' | 'granted' | 'denied'>('idle');
+
+  const enablePush = async () => {
+    if (!orderCode) return;
+    setPushState('loading');
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    window.OneSignalDeferred.push(async (OneSignal) => {
+      try {
+        const granted: boolean = await OneSignal.Notifications.requestPermission();
+        if (granted) {
+          // Link this subscription to the order code so status pushes reach this device
+          await OneSignal.login(orderCode);
+          setPushState('granted');
+        } else {
+          setPushState('denied');
+        }
+      } catch {
+        setPushState('denied');
+      }
+    });
+  };
 
   const copy = async () => {
     if (!orderCode) return;
@@ -150,6 +171,32 @@ export function OrderSuccessModal({
                 className="mt-4 text-[11px] text-nasij-ink/40"
               >
                 {t.confirm.saveCode}
+              </motion.div>
+
+              {/* Push opt-in */}
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.4 }}
+                className="mt-4 flex items-center justify-center"
+              >
+                {pushState === 'granted' ? (
+                  <span className="inline-flex items-center gap-2 text-xs text-emerald-600">
+                    <Check size={13} />
+                    {locale === 'ar' ? 'ستصلك إشعارات بتحديثات طلبك' : "You'll get order update notifications"}
+                  </span>
+                ) : pushState !== 'denied' ? (
+                  <button
+                    onClick={enablePush}
+                    disabled={pushState === 'loading'}
+                    className="inline-flex items-center gap-2 text-xs border border-nasij-accent/40 text-nasij-primary hover:bg-nasij-secondary/40 transition-colors px-4 py-2 rounded-full disabled:opacity-50"
+                  >
+                    <Bell size={13} />
+                    {pushState === 'loading'
+                      ? (locale === 'ar' ? 'جاري التفعيل...' : 'Enabling...')
+                      : (locale === 'ar' ? 'إشعارات تحديث الطلب' : 'Notify me about my order')}
+                  </button>
+                ) : null}
               </motion.div>
 
               <motion.div

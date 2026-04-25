@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { LocaleProvider } from '@/lib/i18n/provider';
 import { WhatsAppButton } from '@/components/WhatsAppButton';
 import { SetupBanner } from '@/components/SetupBanner';
+import { OneSignalInit } from '@/components/OneSignalInit';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <LocaleProvider>
           {children}
           <WhatsAppButton />
+          <OneSignalInit />
           <SpeedInsights />
           <Analytics />
           <Toaster

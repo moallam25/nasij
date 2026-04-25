@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { LogOut, Package, ShoppingBag, LayoutDashboard, ExternalLink, BarChart3, Ruler, Stethoscope, Tag } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Logo } from '@/components/Logo';
+import { AdminPushSubscribe } from '@/components/AdminPushSubscribe';
 import toast from 'react-hot-toast';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -94,6 +95,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <span className="text-[10px] tracking-wide opacity-60">View Site</span>
             </span>
           </Link>
+          <AdminPushSubscribe />
         </nav>
         <button
           onClick={signOut}

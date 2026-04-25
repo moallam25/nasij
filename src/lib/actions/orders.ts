@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import { notify } from '@/lib/notifications';
+import { notifyAdminNewOrder, notifyCustomerStatusChanged } from '@/lib/push';
 
 export type CreateOrderInput = {
   customer_name: string;
@@ -127,6 +128,9 @@ export async function submitOrder(input: CreateOrderInput) {
       .catch(() => {});
   }
 
+  // Push admin — fire-and-forget, never blocks the response
+  notifyAdminNewOrder(data.order_code, data.customer_name).catch(() => {});
+
   return { ok: true as const, orderCode: data.order_code as string };
 }
 
@@ -183,6 +187,9 @@ export async function updateOrderStatus(orderId: string, newStatus: string) {
       status: data.status,
     }).catch(() => {});
   }
+
+  // Push customer if they subscribed with this order code as their external ID
+  notifyCustomerStatusChanged(data.order_code, newStatus).catch(() => {});
 
   return { ok: true as const };
 }
