@@ -1,98 +1,106 @@
-import { createServerClient } from '@supabase/ssr';
+import { unsealData } from 'iron-session';
 import { NextResponse, type NextRequest } from 'next/server';
+import { COOKIE_NAME, type AdminSession } from '@/lib/session';
 
 /**
- * Middleware:
- *   - Protects /dashboard/* (except /dashboard/login)
- *   - Protects /api/invoice/* (returns 401)
- *   - Redirects logged-in users away from /dashboard/login
+ * Read and validate the admin session from the request cookie.
  *
- * Fail-open semantics: if Supabase env vars are missing or the auth check
- * itself throws (network blip, paused project), we let the request through.
- * The login page renders its own diagnostic UI; blocking here would just
- * give the user an opaque redirect loop.
+ * Uses unsealData() rather than getIronSession(req, res) to avoid passing a
+ * reference to the outgoing response into iron-session. getIronSession stores
+ * the res reference and can mutate it (set/delete cookies) as a side-effect,
+ * which could corrupt the response headers we return.
+ *
+ * process.env.SESSION_SECRET is read here (at call time), not at module-eval
+ * time, so a Vercel Edge cold-start can never freeze it as ''.
  */
-export async function middleware(request: NextRequest) {
-  const path = request.nextUrl.pathname;
-  let response = NextResponse.next({ request });
+async function getAdminSession(request: NextRequest): Promise<AdminSession | null> {
+  const secret = process.env.SESSION_SECRET;
+  // Require a secret of at least 32 chars — iron-session's minimum
+  if (!secret || secret.length < 32) return null;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  // Env not configured: let everything through so the login page can show
-  // its own "env missing" message. Without this, /dashboard would redirect
-  // to /dashboard/login which would redirect back, etc.
-  if (!url || !anonKey) {
-    if (path.startsWith('/api/invoice') || path.startsWith('/api/export') || path.startsWith('/invoice')) {
-      return NextResponse.json(
-        { error: 'Supabase env not configured on the server' },
-        { status: 500 }
-      );
-    }
-    return response;
-  }
-
-  let user: { id: string } | null = null;
+  const cookieValue = request.cookies.get(COOKIE_NAME)?.value;
+  if (!cookieValue) return null;
 
   try {
-    const supabase = createServerClient(url, anonKey, {
-      cookies: {
-        getAll: () => request.cookies.getAll(),
-        setAll: (cookiesToSet: { name: string; value: string; options?: any }[]) => {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          response = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
-        },
-      },
-    });
+    // ttl:0 → don't enforce seal-level TTL; we use expiresAt for our own check
+    return await unsealData<AdminSession>(cookieValue, { password: secret, ttl: 0 });
+  } catch {
+    // Invalid or tampered cookie → treat as unauthenticated
+    return null;
+  }
+}
 
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
-  } catch (e) {
-    console.error('[middleware] auth check failed:', e);
-    if (path.startsWith('/api/invoice') || path.startsWith('/api/export')) {
-      return NextResponse.json(
-        { error: 'Auth service unreachable' },
-        { status: 503 }
+function sessionIsValid(session: AdminSession | null): boolean {
+  return (
+    session !== null &&
+    session.admin === true &&
+    typeof session.expiresAt === 'number' &&
+    session.expiresAt > Date.now()
+  );
+}
+
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Evaluate session once and reuse — avoids calling getAdminSession twice
+  const session = await getAdminSession(request);
+  const authed = sessionIsValid(session);
+
+  // ── /dashboard/login ────────────────────────────────────────────────────
+  if (pathname === '/dashboard/login') {
+    // Logged-in users visiting the login page get bounced to the dashboard
+    return authed
+      ? NextResponse.redirect(new URL('/dashboard', request.url))
+      : NextResponse.next();
+  }
+
+  // ── /dashboard/diagnose ─────────────────────────────────────────────────
+  // Always accessible so a broken setup can be diagnosed from the outside
+  if (pathname === '/dashboard/diagnose') {
+    return NextResponse.next();
+  }
+
+  // ── All other /dashboard routes ─────────────────────────────────────────
+  if (pathname.startsWith('/dashboard')) {
+    if (!authed) {
+      const loginUrl = new URL('/dashboard/login', request.url);
+      if (pathname !== '/dashboard') loginUrl.searchParams.set('next', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    return NextResponse.next();
+  }
+
+  // ── /api/invoice/* and /api/export/* ────────────────────────────────────
+  if (pathname.startsWith('/api/invoice') || pathname.startsWith('/api/export')) {
+    return authed
+      ? NextResponse.next()
+      : NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // ── /invoice/* HTML print pages ─────────────────────────────────────────
+  if (pathname.startsWith('/invoice')) {
+    if (!authed) {
+      return NextResponse.redirect(
+        new URL(
+          `/dashboard/login?next=${encodeURIComponent(pathname)}`,
+          request.url,
+        ),
       );
     }
-    return response;
+    return NextResponse.next();
   }
 
-  // Always allow the login page and the diagnose page through.
-  // The diagnose page exists to help fix a broken setup — gating it behind
-  // login when login itself is broken creates a chicken-and-egg trap.
-  if (path === '/dashboard/login' || path === '/dashboard/diagnose') {
-    if (path === '/dashboard/login' && user) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
-    return response;
-  }
-
-  // Protect /dashboard/*
-  if (path.startsWith('/dashboard') && !user) {
-    const loginUrl = new URL('/dashboard/login', request.url);
-    if (path !== '/dashboard') loginUrl.searchParams.set('next', path);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // Protect /api/invoice/* and /api/export/*
-  if ((path.startsWith('/api/invoice') || path.startsWith('/api/export')) && !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  // Protect /invoice/* HTML print pages
-  if (path.startsWith('/invoice') && !user) {
-    return NextResponse.redirect(new URL(`/dashboard/login?next=${path}`, request.url));
-  }
-
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/api/invoice/:path*', '/api/export/:path*', '/invoice/:path*'],
+  matcher: [
+    // Use (.*) regex patterns — unambiguous zero-or-more match in all Next.js 14 versions.
+    // /dashboard/:path* has been observed to miss the bare /dashboard path in some
+    // path-to-regexp releases shipped inside Next.js patch versions.
+    '/dashboard(.*)',
+    '/api/invoice/(.*)',
+    '/api/export/(.*)',
+    '/invoice/(.*)',
+  ],
 };

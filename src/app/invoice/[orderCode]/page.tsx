@@ -1,7 +1,8 @@
-import { createServerClient } from '@supabase/ssr';
+import { getIronSession } from 'iron-session';
 import { cookies } from 'next/headers';
 import { redirect, notFound } from 'next/navigation';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getSessionOptions, type AdminSession } from '@/lib/session';
 import PrintButton from './PrintButton';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -33,23 +34,11 @@ export default async function InvoicePrintPage({
 }) {
   const orderCode = params.orderCode.toUpperCase().trim();
 
-  // Auth check
-  const cookieStore = cookies();
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-  if (!url || !anonKey) redirect('/dashboard/login');
-
-  const authClient = createServerClient(url, anonKey, {
-    cookies: {
-      getAll: () => cookieStore.getAll(),
-      setAll: () => {},
-    },
-  });
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-  if (!user) redirect(`/dashboard/login?next=/invoice/${orderCode}`);
+  // Auth check via iron-session (defense-in-depth — middleware already guards /invoice/*)
+  const session = await getIronSession<AdminSession>(cookies() as any, getSessionOptions());
+  if (!session.admin || session.expiresAt <= Date.now()) {
+    redirect(`/dashboard/login?next=${encodeURIComponent(`/invoice/${orderCode}`)}`);
+  }
 
   const supabase = createAdminClient();
   const { data: order } = await supabase

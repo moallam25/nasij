@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import { LogOut, Package, ShoppingBag, LayoutDashboard, ExternalLink, BarChart3, Ruler, Stethoscope, Tag } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 import { Logo } from '@/components/Logo';
 import { AdminPushSubscribe } from '@/components/AdminPushSubscribe';
 import toast from 'react-hot-toast';
@@ -29,8 +28,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (pathname === '/dashboard/login') return <div dir="rtl">{children}</div>;
 
   const signOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await fetch('/api/auth/logout', { method: 'POST' });
     toast.success('تم تسجيل الخروج');
     router.push('/dashboard/login');
     router.refresh();

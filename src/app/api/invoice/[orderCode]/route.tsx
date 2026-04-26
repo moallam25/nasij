@@ -1,24 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { renderToBuffer } from '@react-pdf/renderer';
+import { getIronSession } from 'iron-session';
+import { cookies } from 'next/headers';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { InvoiceDocument, type InvoiceData } from '@/lib/invoices/InvoiceDocument';
+import { getSessionOptions, type AdminSession } from '@/lib/session';
 
 // Force Node runtime — react-pdf needs Node APIs (not Edge-compatible)
 export const runtime = 'nodejs';
 // Don't cache — invoices should reflect current order state
 export const dynamic = 'force-dynamic';
 
-/**
- * GET /api/invoice/[orderCode]
- *
- * Returns a PDF invoice for the given order. Authentication: requires the
- * caller to be an authenticated admin. We piggyback on the same Supabase
- * session cookie that the dashboard middleware uses.
- *
- * For now we use the admin client to read the order (RLS-bypassing), but
- * we gate the route via the existing dashboard middleware (matcher: /dashboard
- * only). To expose this safely at /api/invoice/, we re-check session here.
- */
+/** GET /api/invoice/[orderCode] — returns PDF invoice; requires admin session. */
 export async function GET(
   _req: NextRequest,
   { params }: { params: { orderCode: string } }
@@ -28,27 +21,9 @@ export async function GET(
     return NextResponse.json({ error: 'Invalid order code' }, { status: 400 });
   }
 
-  // Auth check: require a Supabase session cookie. We use the SSR client
-  // for this so we read the user's auth state from the request cookies.
-  const { createServerClient } = await import('@supabase/ssr');
-  const { cookies } = await import('next/headers');
-  const cookieStore = cookies();
-  const authClient = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll: () => {
-          /* read-only in API route */
-        },
-      },
-    }
-  );
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-  if (!user) {
+  // Auth check via iron-session (defense-in-depth — middleware already guards this route)
+  const session = await getIronSession<AdminSession>(cookies(), getSessionOptions());
+  if (!session.admin || session.expiresAt <= Date.now()) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
