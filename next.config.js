@@ -1,5 +1,21 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async headers() {
+    return [
+      {
+        // OneSignal service worker must be served with:
+        //   - Service-Worker-Allowed: / so it can control the entire origin
+        //   - Cache-Control: no-cache so Vercel CDN never serves a stale copy
+        //   - Correct MIME type so the browser registers it as a SW
+        source: '/OneSignalSDKWorker.js',
+        headers: [
+          { key: 'Service-Worker-Allowed', value: '/' },
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+          { key: 'Content-Type', value: 'application/javascript; charset=utf-8' },
+        ],
+      },
+    ];
+  },
   experimental: {
     // Keep @react-pdf/renderer out of webpack — it is ESM-only (type:module)
     // and depends on Node-only APIs (canvas, fs, yoga-layout native addon).

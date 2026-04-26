@@ -7,8 +7,8 @@
  *   ONESIGNAL_REST_API_KEY        – REST API key (server-only secret)
  */
 
-const APP_ID   = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID;
-const REST_KEY = process.env.ONESIGNAL_REST_API_KEY;
+const APP_ID   = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID || 'f4b5b1c8-dee5-4111-ba36-493bb8b8f764';
+const REST_KEY = process.env.ONESIGNAL_REST_API_KEY; // server-only secret — must be in Vercel env vars
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '');
 const API      = 'https://onesignal.com/api/v1/notifications';
 
