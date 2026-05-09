@@ -3,12 +3,11 @@
 import Image from 'next/image';
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { useLocale } from '@/lib/i18n/provider';
 
 export function Hero() {
-  const { t, locale } = useLocale();
-  const Arrow = locale === 'ar' ? ArrowLeft : ArrowRight;
+  const { t } = useLocale();
 
   // Memoize the 48 warp-thread positions — pure geometry, never changes
   const warpThreads = useMemo(
@@ -66,12 +65,8 @@ export function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
-            className="mt-10 flex flex-wrap items-center gap-3"
+            className="mt-10"
           >
-            <a href="#custom" className="btn-primary group">
-              {t.hero.ctaPrimary}
-              <Arrow size={18} className="transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
-            </a>
             <a href="#gallery" className="btn-outline">{t.hero.ctaSecondary}</a>
           </motion.div>
 
