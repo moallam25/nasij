@@ -22,6 +22,9 @@ type Product = {
   price: number;
   description: string | null;
   category: string | null;
+  discount_percent: number | null;
+  is_featured: boolean;
+  in_stock: boolean;
 };
 
 const FALLBACK_CATEGORY = 'all';
@@ -60,7 +63,9 @@ export function Gallery() {
         const supabase = createClient();
         const { data } = await supabase
           .from('products')
-          .select('*')
+          .select('id, name, image, price, description, category, discount_percent, is_featured, in_stock')
+          .eq('is_visible', true)
+          .order('is_featured', { ascending: false })
           .order('created_at', { ascending: false });
         setProducts((data || []) as Product[]);
       } catch {
@@ -300,8 +305,25 @@ function ProductCard({ product, index, onClick }: { product: Product; index: num
           {product.name}
         </div>
         <div className="mt-2 flex items-center justify-between gap-2">
-          <div className="text-sm text-nasij-accent font-medium">
-            {Number(product.price).toLocaleString('en-US')} <span className="opacity-70 text-xs">EGP</span>
+          <div className="flex items-baseline gap-1.5">
+            {product.discount_percent ? (
+              <>
+                <span className="text-sm text-nasij-accent font-semibold">
+                  {Math.round(Number(product.price) * (1 - product.discount_percent / 100)).toLocaleString('en-US')}
+                  <span className="opacity-60 text-xs ms-0.5">EGP</span>
+                </span>
+                <span className="text-xs text-nasij-cream/50 line-through">
+                  {Number(product.price).toLocaleString('en-US')}
+                </span>
+                <span className="text-[10px] font-bold bg-red-500 text-white px-1.5 py-0.5 rounded-full">
+                  -{product.discount_percent}%
+                </span>
+              </>
+            ) : (
+              <span className="text-sm text-nasij-accent font-medium">
+                {Number(product.price).toLocaleString('en-US')} <span className="opacity-70 text-xs">EGP</span>
+              </span>
+            )}
           </div>
           {product.category && product.category !== FALLBACK_CATEGORY && (
             <div className="text-[10px] tracking-wider uppercase text-nasij-cream/70 bg-nasij-cream/10 px-2 py-0.5 rounded-full backdrop-blur">
@@ -398,8 +420,17 @@ function ProductModal({ product, isAr, t, onClose, onOrderSuccess }: {
             <Image src={product.image} alt={product.name} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
           )}
           {product.price > 0 && (
-            <div className="absolute bottom-4 start-4 bg-nasij-primary/85 backdrop-blur text-nasij-cream px-4 py-2 rounded-full text-sm font-medium shadow">
-              {Number(product.price).toLocaleString('en-US')} EGP
+            <div className="absolute bottom-4 start-4 flex items-center gap-2">
+              <div className="bg-nasij-primary/85 backdrop-blur text-nasij-cream px-4 py-2 rounded-full text-sm font-medium shadow">
+                {product.discount_percent
+                  ? `${Math.round(Number(product.price) * (1 - product.discount_percent / 100)).toLocaleString('en-US')} EGP`
+                  : `${Number(product.price).toLocaleString('en-US')} EGP`}
+              </div>
+              {product.discount_percent ? (
+                <div className="bg-red-500 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-full shadow">
+                  -{product.discount_percent}%
+                </div>
+              ) : null}
             </div>
           )}
         </div>
@@ -422,8 +453,25 @@ function ProductModal({ product, isAr, t, onClose, onOrderSuccess }: {
                   <Sparkles size={12} /> {t.gallery.handmade}
                 </div>
                 <h3 className="display-heading text-3xl md:text-4xl text-nasij-primary leading-tight">{product.name}</h3>
-                <div className="display-heading text-2xl text-nasij-accent-dark mt-3">
-                  {Number(product.price).toLocaleString('en-US')} <span className="text-base text-nasij-ink/50">EGP</span>
+                <div className="mt-3 flex items-baseline gap-3 flex-wrap">
+                  {product.discount_percent ? (
+                    <>
+                      <span className="display-heading text-2xl text-nasij-primary">
+                        {Math.round(Number(product.price) * (1 - product.discount_percent / 100)).toLocaleString('en-US')}
+                        <span className="text-base font-normal text-nasij-ink/50 ms-1">EGP</span>
+                      </span>
+                      <span className="text-lg text-nasij-ink/35 line-through">
+                        {Number(product.price).toLocaleString('en-US')} EGP
+                      </span>
+                      <span className="inline-flex items-center gap-1 bg-red-50 text-red-600 border border-red-200 text-xs font-bold px-2.5 py-1 rounded-full">
+                        {product.discount_percent}% OFF
+                      </span>
+                    </>
+                  ) : (
+                    <span className="display-heading text-2xl text-nasij-accent-dark">
+                      {Number(product.price).toLocaleString('en-US')} <span className="text-base text-nasij-ink/50">EGP</span>
+                    </span>
+                  )}
                 </div>
                 {product.category && product.category !== FALLBACK_CATEGORY && (
                   <div className="mt-3 inline-flex items-center text-xs tracking-wider uppercase text-nasij-primary bg-nasij-secondary/60 px-3 py-1 rounded-full self-start">{product.category}</div>

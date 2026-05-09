@@ -7,7 +7,6 @@ import { About } from '@/components/About';
 import { Gallery } from '@/components/Gallery';
 import { CustomBuilder } from '@/components/CustomBuilder';
 import { WhyNasij } from '@/components/WhyNasij';
-import { OrderForm } from '@/components/OrderForm';
 import { Footer } from '@/components/Footer';
 import { useLocale } from '@/lib/i18n/provider';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -39,7 +38,6 @@ export default function Home() {
       <Gallery />
       <CustomBuilder />
       <WhyNasij />
-      <OrderForm />
       <Footer />
 
       {/* Sticky mobile CTA */}

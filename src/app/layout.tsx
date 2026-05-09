@@ -25,7 +25,7 @@ const notoKufi = Noto_Kufi_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: 'NASIJ — نسيج | سجاد منفوش يدوياً',
+  title: 'NASIJ — نسيج | سجاد منقوش يدوياً',
   description: 'نسيج براند مصري بيحول تصميماتك لسجاد حقيقي مصنوع بإيد حرفيين.',
 };
 
