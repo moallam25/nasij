@@ -116,6 +116,7 @@ export default function ProductsPage() {
     setSaving(true);
     const supabase = createClient();
     try {
+      // Image upload stays client-side (binary data can't go through server actions)
       let image = form.image;
       if (file) {
         const ext = file.name.split('.').pop();
@@ -124,30 +125,36 @@ export default function ProductsPage() {
         if (upErr) throw upErr;
         image = supabase.storage.from('products').getPublicUrl(path).data.publicUrl;
       }
+
       const payload = {
-        name: form.name.trim(),
-        image,
-        price: Number(form.price),
-        description: form.description.trim() || null,
-        category: form.category || 'all',
+        name:             form.name.trim(),
+        image:            image || null,
+        price:            Number(form.price),
+        description:      form.description.trim() || null,
+        category:         form.category || 'all',
         discount_percent: Number(form.discount_percent) || 0,
-        is_featured: form.is_featured,
-        in_stock: form.in_stock,
-        is_visible: form.is_visible,
+        is_featured:      form.is_featured,
+        in_stock:         form.in_stock,
+        is_visible:       form.is_visible,
       };
+
+      // Route DB mutations through server actions so events are emitted
       if (editing) {
-        const { error } = await supabase.from('products').update(payload).eq('id', editing.id);
-        if (error) throw error;
+        const { updateProduct } = await import('@/lib/actions/products');
+        const prevInStock = editing.in_stock;
+        const result = await updateProduct(editing.id, payload, prevInStock);
+        if (!result.ok) throw new Error(result.error);
         toast.success('Product updated');
       } else {
-        const { error } = await supabase.from('products').insert(payload);
-        if (error) throw error;
+        const { createProduct } = await import('@/lib/actions/products');
+        const result = await createProduct(payload);
+        if (!result.ok) throw new Error(result.error);
         toast.success('Product added');
       }
       setOpen(false);
       load();
-    } catch (e: any) {
-      toast.error(e.message || 'Something went wrong');
+    } catch (e: unknown) {
+      toast.error((e instanceof Error ? e.message : null) || 'Something went wrong');
     } finally {
       setSaving(false);
     }
@@ -155,18 +162,20 @@ export default function ProductsPage() {
 
   const remove = async (id: string) => {
     if (!confirm('Delete this product?')) return;
-    const supabase = createClient();
-    const { error } = await supabase.from('products').delete().eq('id', id);
-    if (error) return toast.error(error.message);
+    const { deleteProduct } = await import('@/lib/actions/products');
+    const result = await deleteProduct(id);
+    if (!result.ok) return toast.error(result.error || 'Delete failed');
     toast.success('Deleted');
     setProducts((prev) => prev.filter((p) => p.id !== id));
   };
 
-  // Quick toggles without opening the form
+  // Quick toggles — routed through server actions so stock.low event fires
   const quickToggle = async (id: string, field: 'is_featured' | 'in_stock' | 'is_visible', value: boolean) => {
-    const supabase = createClient();
-    const { error } = await supabase.from('products').update({ [field]: value }).eq('id', id);
-    if (error) return toast.error(error.message);
+    const current = products.find((p) => p.id === id);
+    const prevInStock = current?.in_stock;
+    const { quickToggleProduct } = await import('@/lib/actions/products');
+    const result = await quickToggleProduct(id, field, value, prevInStock);
+    if (!result.ok) return toast.error(result.error || 'Toggle failed');
     setProducts((prev) => prev.map((p) => p.id === id ? { ...p, [field]: value } : p));
   };
 

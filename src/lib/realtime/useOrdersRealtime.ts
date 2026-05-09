@@ -3,18 +3,23 @@
 import { useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
-type Handler = () => void;
+export type RealtimeOrderEvent = {
+  eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+  newRow: Record<string, unknown> | null;
+  oldRow: Record<string, unknown> | null;
+};
+
+type Handler = (event: RealtimeOrderEvent) => void;
 
 /**
- * Subscribe to all INSERT/UPDATE/DELETE events on the `orders` table and call
- * `onChange` whenever something happens. Re-uses one Supabase client per
- * mount; cleans up on unmount.
+ * Subscribe to INSERT/UPDATE/DELETE events on the `orders` table.
+ * The callback receives the event type + new/old row data so callers can
+ * differentiate a new order from a status update.
  *
- * IMPORTANT: For this to fire, you need to enable Realtime on the `orders`
- * table in Supabase: Database → Replication → enable for `orders`.
+ * IMPORTANT: Enable Realtime on the `orders` table in Supabase:
+ *   Database → Replication → toggle `orders`
  *
- * The hook is safe to import on the dashboard. If Supabase env vars are
- * missing it silently no-ops (avoids breaking the page).
+ * Safe to use in the dashboard — silently no-ops if env vars are missing.
  */
 export function useOrdersRealtime(onChange: Handler) {
   const handlerRef = useRef(onChange);
@@ -30,13 +35,16 @@ export function useOrdersRealtime(onChange: Handler) {
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'orders' },
-          () => {
-            handlerRef.current();
-          }
+          (payload) => {
+            handlerRef.current({
+              eventType: payload.eventType as 'INSERT' | 'UPDATE' | 'DELETE',
+              newRow:    (payload.new as Record<string, unknown>) || null,
+              oldRow:    (payload.old as Record<string, unknown>) || null,
+            });
+          },
         )
         .subscribe();
     } catch (e) {
-      // env missing — no-op
       console.warn('[realtime] disabled:', e instanceof Error ? e.message : e);
     }
 
