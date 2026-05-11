@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, Check, X, Ruler, Plus, ImageOff, ChevronRight } from 'lucide-react';
+import { Upload, Check, X, Ruler, Plus, ImageOff, ChevronRight, Sparkles, Clock, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createClient } from '@/lib/supabase/client';
 import { submitOrder } from '@/lib/actions/orders';
@@ -595,6 +595,48 @@ export function CustomBuilder() {
             </div>
           </motion.div>
         </div>
+      </div>
+
+      {/* Premium feature cards */}
+      <div className="mt-20 grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto px-6">
+        {[
+          {
+            icon: <Sparkles size={28} className="text-nasij-accent" />,
+            titleAr: 'صناعة يدوية 100٪',
+            titleEn: 'Fully Handcrafted',
+            descAr: 'كل غرزة تُنسج بإيد حرفيين مصريين محترفين — لا ماكينات.',
+          },
+          {
+            icon: <Clock size={28} className="text-nasij-accent" />,
+            titleAr: '10 – 15 يوم تنفيذ',
+            titleEn: '10–15 Day Delivery',
+            descAr: 'من يوم تأكيد الطلب لحد ما تلاقيها على بابك.',
+          },
+          {
+            icon: <Shield size={28} className="text-nasij-accent" />,
+            titleAr: 'صوف 100٪ فاخر',
+            titleEn: '100% Premium Wool',
+            descAr: 'خيوط صوف وأكريليك عالي الجودة على دعامة متينة.',
+          },
+        ].map((card, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: i * 0.12 }}
+            className="flex flex-col items-center text-center gap-3 bg-nasij-secondary/40 border border-nasij-accent/20 rounded-2xl px-6 py-8"
+          >
+            <div className="w-14 h-14 rounded-full bg-nasij-accent/10 flex items-center justify-center">
+              {card.icon}
+            </div>
+            <div>
+              <p className="font-semibold text-nasij-primary text-base">{card.titleAr}</p>
+              <p className="text-[11px] text-nasij-ink/40 tracking-wide mt-0.5">{card.titleEn}</p>
+            </div>
+            <p className="text-sm text-nasij-ink/60 leading-relaxed">{card.descAr}</p>
+          </motion.div>
+        ))}
       </div>
 
       <RopeDivider className="mt-24" />

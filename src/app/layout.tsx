@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Fraunces, Outfit, Cairo, Noto_Kufi_Arabic } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 import { LocaleProvider } from '@/lib/i18n/provider';
+import { StoreShell } from '@/components/StoreShell';
 import { WhatsAppButton } from '@/components/WhatsAppButton';
 import { SetupBanner } from '@/components/SetupBanner';
 import { OneSignalInit } from '@/components/OneSignalInit';
@@ -39,7 +40,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <SetupBanner />
         <LocaleProvider>
-          {children}
+          <StoreShell>
+            {children}
+          </StoreShell>
           <WhatsAppButton />
           <OneSignalInit />
           <SpeedInsights />

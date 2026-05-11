@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import {
   LogOut, Package, ShoppingBag, LayoutDashboard,
-  ExternalLink, BarChart3, Ruler, Stethoscope, Tag,
+  ExternalLink, BarChart3, Ruler, Stethoscope, Tag, Truck,
 } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { AdminPushSubscribe } from '@/components/AdminPushSubscribe';
@@ -46,6 +46,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { href: '/dashboard/products',   label: 'المنتجات',  en: 'Products',    icon: Package,         badge: 0 },
     { href: '/dashboard/categories', label: 'الفئات',    en: 'Categories',  icon: Tag,             badge: 0 },
     { href: '/dashboard/sizes',      label: 'المقاسات',  en: 'Sizes',       icon: Ruler,           badge: 0 },
+    { href: '/dashboard/shipping',   label: 'الشحن',     en: 'Shipping',    icon: Truck,           badge: 0 },
   ];
 
   return (

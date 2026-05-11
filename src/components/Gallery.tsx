@@ -6,8 +6,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Sparkles, ArrowUpRight,
   ChevronLeft, ChevronRight,
-  Phone, CreditCard, Truck, Check, Copy,
+  Phone, CreditCard, Truck, Check, Copy, ShoppingCart,
 } from 'lucide-react';
+import { useCart } from '@/lib/cart/context';
 import toast from 'react-hot-toast';
 import { createClient } from '@/lib/supabase/client';
 import { submitOrder } from '@/lib/actions/orders';
@@ -272,8 +273,20 @@ export function Gallery() {
 // ─── ProductCard ──────────────────────────────────────────────────────────────
 
 function ProductCard({ product, index, onClick }: { product: Product; index: number; onClick: () => void }) {
+  const { addItem } = useCart();
+
+  const finalPrice = product.discount_percent
+    ? Math.round(Number(product.price) * (1 - product.discount_percent / 100))
+    : Number(product.price);
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    addItem({ id: product.id, name: product.name, nameAr: product.name, price: finalPrice, imageUrl: product.image, qty: 1 });
+    toast.success('تمت الإضافة للسلة');
+  };
+
   return (
-    <motion.button
+    <motion.div
       layout
       initial={index < 8 ? { opacity: 0, y: 30 } : false}
       animate={{ opacity: 1, y: 0 }}
@@ -281,6 +294,9 @@ function ProductCard({ product, index, onClick }: { product: Product; index: num
       transition={{ ...cardSpring, delay: index < 8 ? Math.min(index * 0.05, 0.32) : 0 }}
       whileHover={{ y: -6 }}
       onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onClick()}
       aria-label={`Open ${product.name}`}
       className="group snap-start shrink-0 w-[240px] sm:w-[270px] md:w-[290px] aspect-[3/4] relative overflow-hidden rounded-3xl bg-nasij-primary text-start cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-nasij-accent focus-visible:ring-offset-4 focus-visible:ring-offset-nasij-secondary-light"
     >
@@ -332,7 +348,18 @@ function ProductCard({ product, index, onClick }: { product: Product; index: num
           )}
         </div>
       </div>
-    </motion.button>
+
+      {/* Add to cart — appears on hover */}
+      {product.in_stock && (
+        <button
+          onClick={handleAddToCart}
+          className="absolute bottom-4 end-4 w-9 h-9 rounded-full bg-nasij-accent flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:bg-nasij-accent-dark shadow-lg"
+          aria-label="أضف للسلة"
+        >
+          <ShoppingCart size={15} className="text-white" />
+        </button>
+      )}
+    </motion.div>
   );
 }
 
@@ -347,12 +374,23 @@ function ProductModal({ product, isAr, t, onClose, onOrderSuccess }: {
   onClose: () => void;
   onOrderSuccess: (code: string) => void;
 }) {
+  const { addItem } = useCart();
   const [view, setView]               = useState<ModalView>('detail');
   const [form, setForm]               = useState({ customer_name: '', phone: '', address: '', customer_email: '' });
   const [paymentMethod, setPaymentMethod] = useState('');
   const [agreed, setAgreed]           = useState(false);
   const [submitting, setSubmitting]   = useState(false);
   const [copiedId, setCopiedId]       = useState<string | null>(null);
+
+  const modalFinalPrice = product.discount_percent
+    ? Math.round(Number(product.price) * (1 - product.discount_percent / 100))
+    : Number(product.price);
+
+  const handleModalAddToCart = () => {
+    addItem({ id: product.id, name: product.name, nameAr: product.name, price: modalFinalPrice, imageUrl: product.image, qty: 1 });
+    toast.success('تمت الإضافة للسلة');
+    onClose();
+  };
 
   const copyAccount = async (pmId: string) => {
     const num = PAYMENT_ACCOUNTS[pmId];
@@ -480,7 +518,15 @@ function ProductModal({ product, isAr, t, onClose, onOrderSuccess }: {
                   <p className="mt-5 text-base text-nasij-ink/70 leading-relaxed flex-1">{product.description}</p>
                 )}
                 <div className="mt-auto pt-8 flex flex-col sm:flex-row gap-3">
-                  <button onClick={() => setView('order')} className="btn-primary flex-1 justify-center">{t.gallery.inquire}</button>
+                  {product.in_stock && (
+                    <button
+                      onClick={handleModalAddToCart}
+                      className="btn-primary flex-1 justify-center inline-flex items-center gap-2"
+                    >
+                      <ShoppingCart size={16} /> أضف للسلة
+                    </button>
+                  )}
+                  <button onClick={() => setView('order')} className="btn-outline flex-1 justify-center">{t.gallery.inquire}</button>
                   <a href="#custom" onClick={onClose} className="btn-outline flex-1 justify-center">{t.gallery.custom}</a>
                 </div>
               </motion.div>

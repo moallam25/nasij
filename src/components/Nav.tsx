@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Globe, Search } from 'lucide-react';
+import { Menu, X, Globe, Search, ShoppingBag } from 'lucide-react';
 import { Logo } from './Logo';
 import { useLocale } from '@/lib/i18n/provider';
+import { useCart } from '@/lib/cart/context';
 
 // Must match the id="" attributes on each page section, in document order.
 const SECTION_IDS = ['about', 'gallery', 'custom', 'why', 'order'];
@@ -15,6 +16,7 @@ export function Nav() {
   const [open, setOpen]                   = useState(false);
   const [activeSection, setActiveSection] = useState('');
   const { t, toggleLocale, locale }       = useLocale();
+  const { count, openCart }               = useCart();
 
   // Navbar background on scroll
   useEffect(() => {
@@ -110,7 +112,7 @@ export function Nav() {
             })}
           </div>
 
-          {/* Right controls — CTA removed */}
+          {/* Right controls */}
           <div className="flex items-center gap-2">
             <Link
               href="/track"
@@ -125,6 +127,19 @@ export function Nav() {
             >
               <Globe size={14} />
               {t.common.lang}
+            </button>
+            {/* Cart button */}
+            <button
+              onClick={openCart}
+              aria-label="فتح السلة"
+              className="relative p-2 text-nasij-primary hover:bg-nasij-secondary/40 rounded-full transition-colors"
+            >
+              <ShoppingBag size={22} />
+              {count > 0 && (
+                <span className="absolute -top-0.5 -end-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-nasij-accent text-white text-[10px] font-bold flex items-center justify-center tabular-nums leading-none">
+                  {count > 99 ? '99+' : count}
+                </span>
+              )}
             </button>
             <button
               className="lg:hidden text-nasij-primary p-2"
