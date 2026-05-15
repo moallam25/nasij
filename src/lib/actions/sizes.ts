@@ -10,6 +10,8 @@ export type Size = {
   length_cm: number;
   active: boolean;
   sort_order: number;
+  price_min: number | null;
+  price_max: number | null;
 };
 
 const cleanInt = (v: unknown, min: number, max: number) => {
@@ -75,6 +77,30 @@ export async function deleteSize(id: string) {
   if (!id) return { ok: false as const, error: 'Missing id' };
   const supabase = createAdminClient();
   const { error } = await supabase.from('sizes').delete().eq('id', id);
+  if (error) return { ok: false as const, error: error.message };
+  return { ok: true as const };
+}
+
+export async function updateSizePricing(
+  id: string,
+  priceMin: number | null,
+  priceMax: number | null,
+) {
+  try { await requireAdmin(); } catch (e: any) { return { ok: false as const, error: e.message }; }
+  if (!id) return { ok: false as const, error: 'Missing id' };
+
+  const min = priceMin !== null ? cleanInt(priceMin, 0, 9_999_999) : null;
+  const max = priceMax !== null ? cleanInt(priceMax, 0, 9_999_999) : null;
+
+  if (min !== null && max !== null && min > max) {
+    return { ok: false as const, error: 'Min price must be ≤ max price' };
+  }
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from('sizes')
+    .update({ price_min: min, price_max: max })
+    .eq('id', id);
   if (error) return { ok: false as const, error: error.message };
   return { ok: true as const };
 }

@@ -10,7 +10,14 @@ import { RopeDivider } from './RopeDivider';
 import { useLocale } from '@/lib/i18n/provider';
 import { OrderSuccessModal } from './OrderSuccessModal';
 
-type DBSize = { id: string; label: string; width_cm: number; length_cm: number };
+type DBSize = {
+  id: string;
+  label: string;
+  width_cm: number;
+  length_cm: number;
+  price_min: number | null;
+  price_max: number | null;
+};
 
 const colorPalette = [
   { id: 'olive',      hex: '#2F5D4A' },
@@ -70,7 +77,7 @@ export function CustomBuilder() {
     try {
       createClient()
         .from('sizes')
-        .select('id, label, width_cm, length_cm')
+        .select('id, label, width_cm, length_cm, price_min, price_max')
         .eq('active', true)
         .order('sort_order', { ascending: true })
         .then(({ data }) => {
@@ -168,6 +175,13 @@ export function CustomBuilder() {
     if (s === 'custom' && customDims) return `${customDims.length} × ${customDims.width} cm`;
     return sizeLabels[s] ? `${sizeLabels[s].label}` : '—';
   };
+
+  // Derived price range for the currently selected size
+  const selectedDbSize = dbSizes.find((s) => `${s.width_cm}x${s.length_cm}` === size) ?? null;
+  const priceRange =
+    selectedDbSize?.price_min != null && selectedDbSize?.price_max != null
+      ? { min: selectedDbSize.price_min, max: selectedDbSize.price_max }
+      : null;
 
   // Step completion checks
   const step1Done = hasImage;
@@ -344,6 +358,56 @@ export function CustomBuilder() {
                   </motion.button>
                 </div>
               )}
+
+              {/* ── Price range hint ──────────────────────────────── */}
+              <AnimatePresence>
+                {priceRange && size !== 'custom' && (
+                  <motion.div
+                    key={`price-${size}`}
+                    initial={{ opacity: 0, y: -8, height: 0 }}
+                    animate={{ opacity: 1, y: 0, height: 'auto' }}
+                    exit={{ opacity: 0, y: -6, height: 0 }}
+                    transition={{ duration: 0.38, ease: 'easeOut' }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-4 relative rounded-2xl border border-nasij-accent/25 bg-gradient-to-br from-nasij-secondary/50 via-nasij-cream/70 to-nasij-secondary/30 px-5 py-4 overflow-hidden">
+                      {/* Subtle woven texture */}
+                      <div
+                        aria-hidden
+                        className="absolute inset-0 opacity-[0.07] pointer-events-none"
+                        style={{
+                          backgroundImage:
+                            'repeating-linear-gradient(0deg,transparent 0 3px,rgba(216,179,122,0.5) 3px 4px),' +
+                            'repeating-linear-gradient(90deg,transparent 0 3px,rgba(47,93,74,0.3) 3px 4px)',
+                        }}
+                      />
+                      {/* Corner thread accent */}
+                      <div className="absolute top-0 start-0 w-4 h-4 border-t-2 border-s-2 border-nasij-accent/40 rounded-tl-2xl pointer-events-none" />
+                      <div className="absolute bottom-0 end-0 w-4 h-4 border-b-2 border-e-2 border-nasij-accent/40 rounded-br-2xl pointer-events-none" />
+
+                      <div className="relative">
+                        <span className="text-[10px] tracking-[0.15em] uppercase text-nasij-accent-dark/60 block mb-1.5">
+                          السعر المتوقع
+                        </span>
+                        <p className="text-xl font-semibold text-nasij-primary leading-none">
+                          من{' '}
+                          <span className="text-nasij-accent-dark">
+                            {priceRange.min.toLocaleString('ar-EG')}
+                          </span>
+                          {' '}إلى{' '}
+                          <span className="text-nasij-accent-dark">
+                            {priceRange.max.toLocaleString('ar-EG')}
+                          </span>
+                          <span className="text-sm font-normal text-nasij-ink/45 mr-1.5"> ج.م</span>
+                        </p>
+                        <p className="mt-2.5 text-[11px] text-nasij-ink/45 leading-relaxed max-w-sm">
+                          يتم تحديد السعر النهائي بعد مراجعة فريق نسيج للمقاس النهائي، تفاصيل التصميم، والألوان المستخدمة.
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* ── Step 3: Colors ──────────────────────────────────── */}
